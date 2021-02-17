@@ -13,10 +13,6 @@ import fastapi
 from fastapi import Request
 from fastapi.responses import JSONResponse,Response
 
-fractionSize = int(os.getenv("FRACTIONSIZE",4))
-if 12 % fractionSize != 0:
-    raise ValueError("12 must be divisible by fraction size!")
-
 app = fastapi.FastAPI()
 
 def get_frac(a: int, b:int, frac: int, shift: int)->Tuple[int,int]:
@@ -57,6 +53,19 @@ def get_month_frac(a,b,frac,shift):
 
     return start_date,end_date
 
+def span_from_date(date_in:date, frac: int, shift:int=0):
+    try:
+        assert 12 % frac == 0
+    except AssertionError as e:
+        raise ValueError("12 must be divisible by fraction size") from e
+    unit = int(12/frac)
+    current_frac = (math.ceil(date_in.month/(unit))-1)
+    return get_month_frac(
+            date(year=date_in.year,month=1,day=1),
+            date(year=date_in.year,month=12,day=31),
+            frac = frac,
+            shift = current_frac+shift)
+
 @app.get("/{start}/{end}/{frac}/{shift}/")
 def serve_month_frac(start:date,end:date,frac:int,shift:int):
     try:
@@ -65,3 +74,11 @@ def serve_month_frac(start:date,end:date,frac:int,shift:int):
         return JSONResponse({"error":str(e)},status_code=400)
     return JSONResponse({"start":str(f_start),"end":str(f_end)})
 
+@app.get("/today/{frac}/{shift}/")
+def span_from_today(frac:int,shift:int):
+    today = date.today()
+    try:
+        f_start,f_end = span_from_date(today,frac,shift)
+    except ValueError as e:
+        return JSONResponse({"error":str(e)},status_code=400)
+    return JSONResponse({"start":str(f_start),"end":str(f_end)})
