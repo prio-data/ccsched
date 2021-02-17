@@ -19,6 +19,5 @@ jobs:
          - run: |
             export REPO=$(echo $GITHUB_REPOSITORY|awk '{n=split($0,e,"/");print e[n]}')
             export CONTAINER_NAME=${{ secrets.REGISTRY_LOGIN_SERVER }}/$REPO
-            docker build . -t $CONTAINER_NAME:latest #${{ secrets.REGISTRY_LOGIN_SERVER }}/$REPO:latest
-            docker run --rm $CONTAINER_NAME python -m unittest tests.py
+            docker build . -t $CONTAINER_NAME:latest
             docker push ${{ secrets.REGISTRY_LOGIN_SERVER }}/$REPO:latest
