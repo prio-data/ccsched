@@ -2,18 +2,18 @@ from typing import Tuple
 
 import os
 import math
-import datetime
 from datetime import date
 
 from dateutil.relativedelta import relativedelta
 
-from dataclasses import dataclass
-
 import fastapi
-from fastapi import Request
-from fastapi.responses import JSONResponse,Response
+from fastapi.responses import JSONResponse
 
 app = fastapi.FastAPI()
+
+FRAC_SIZE = int(os.getenv("FRACTIONSIZE","4"))
+if 12 % FRAC_SIZE != 0:
+    raise ValueError("12 must be divisible by frac. size")
 
 def get_frac(a: int, b:int, frac: int, shift: int)->Tuple[int,int]:
     try:
@@ -82,3 +82,7 @@ def span_from_today(frac:int,shift:int):
     except ValueError as e:
         return JSONResponse({"error":str(e)},status_code=400)
     return JSONResponse({"start":str(f_start),"end":str(f_end)})
+
+@app.get("/")
+def quarter_span(shift:int=0):
+    return span_from_today(frac = FRAC_SIZE, shift = shift)
