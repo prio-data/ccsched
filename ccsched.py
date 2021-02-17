@@ -66,13 +66,22 @@ def span_from_date(date_in:date, frac: int, shift:int=0):
             frac = frac,
             shift = current_frac+shift)
 
+def span_as_response(start,end):
+    rd = relativedelta(end,start)
+    duration = (rd.months + (rd.years * 12))+1
+    return {
+        "start": start,
+        "end": end,
+        "duration_months": duration 
+    }
+
 @app.get("/{start}/{end}/{frac}/{shift}/")
 def serve_month_frac(start:date,end:date,frac:int,shift:int):
     try:
         f_start,f_end = get_month_frac(start,end,frac,shift)
     except ValueError as e:
         return JSONResponse({"error":str(e)},status_code=400)
-    return JSONResponse({"start":str(f_start),"end":str(f_end)})
+    return span_as_response(f_start,f_end)
 
 @app.get("/today/{frac}/{shift}/")
 def span_from_today(frac:int,shift:int):
@@ -81,7 +90,7 @@ def span_from_today(frac:int,shift:int):
         f_start,f_end = span_from_date(today,frac,shift)
     except ValueError as e:
         return JSONResponse({"error":str(e)},status_code=400)
-    return JSONResponse({"start":str(f_start),"end":str(f_end)})
+    return span_as_response(f_start,f_end)
 
 @app.get("/")
 def quarter_span(shift:int=0):

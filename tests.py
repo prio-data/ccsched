@@ -1,6 +1,6 @@
 from datetime import date
 from unittest import TestCase
-from ccsched import get_frac,get_month_frac
+from ccsched import get_frac,get_month_frac,span_as_response
 from ccsched import span_from_date as span
 
 class PartitioningTest(TestCase):
@@ -94,3 +94,17 @@ class PartitioningTest(TestCase):
             start,end,*args = args
             start,end = (date.fromisoformat(dt) for dt in (start,end))
             self.assertEqual(result,tuple((str(r) for r in get_month_frac(start,end,*args))))
+
+    def test_serialization(self):
+        args_results = [
+            (("1999-01-01","1999-12-01",2,0),6),
+            (("1999-07-01","1999-12-01",2,0),3),
+            (("1999-01-01","1999-12-01",6,1),2),
+            (("1999-01-01","2000-02-01",2,0),7),
+            (("1999-01-01","1999-12-01",2,2),6),
+        ]
+        for args,result in args_results:
+            start,end,*args = args
+            start,end = (date.fromisoformat(dt) for dt in (start,end))
+            ser = span_as_response(*get_month_frac(start,end,*args))
+            self.assertEqual(ser["duration_months"],result)
