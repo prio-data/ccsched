@@ -1,0 +1,16 @@
+name: ci
+on:
+   push:
+      branches: master
+jobs:
+   build-and-deploy:
+      runs-on: ubuntu-latest
+      name: "Build to ACR"
+      steps:
+         - 
+            uses: prio-data/azure_container_ci
+            with:
+               registry: ${{ secrets.REGISTRY }}
+               registry_user: ${{ secrets.REGISTRY_USER }}
+               registry_password: ${{ secrets.REGISTRY_PASSWORD }}
+               azure_creds: ${{ secrets.AZURE_CREDENTIALS }}
