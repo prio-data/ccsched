@@ -5,7 +5,6 @@ import math
 from datetime import date
 
 from dateutil.relativedelta import relativedelta
-
 import fastapi
 from fastapi.responses import JSONResponse
 
@@ -16,6 +15,9 @@ if 12 % FRAC_SIZE != 0:
     raise ValueError("12 must be divisible by frac. size")
 
 def get_frac(a: int, b:int, frac: int, shift: int)->Tuple[int,int]:
+    """
+    Get the fraction {shift} between numbers {a} and {b} given the divisor {frac}
+    """
     try:
         assert a<=b 
     except AssertionError as e:
@@ -39,6 +41,10 @@ def get_frac(a: int, b:int, frac: int, shift: int)->Tuple[int,int]:
     return int(start),int(end)
 
 def get_month_frac(a,b,frac,shift):
+    """
+    Get the boundary dates for fraction {shift} in the span between dates 
+    {a} and {b} given divisor {frac}
+    """
     a = a.replace(day=1)
     b = b.replace(day=1)
 
@@ -53,7 +59,18 @@ def get_month_frac(a,b,frac,shift):
 
     return start_date,end_date
 
+def year_frac(year:int,frac:int,shift:int):
+    """
+    Get the boundary dates of fraction {shift} within year {year} given divisor {frac}
+    """
+    start = date(year=year,month=1,day=1)
+    end = date(year=year,month=12,day=31)
+    return get_month_frac(start,end,frac,shift)
+
 def span_from_date(date_in:date, frac: int, shift:int=0):
+    """
+    Get the fraction span of the fraction containing {date_in}
+    """
     try:
         assert 12 % frac == 0
     except AssertionError as e:
@@ -67,6 +84,9 @@ def span_from_date(date_in:date, frac: int, shift:int=0):
             shift = current_frac+shift)
 
 def span_as_response(start,end):
+    """
+    Format start and end dates as a JSON response
+    """
     rd = relativedelta(end,start)
     duration = (rd.months + (rd.years * 12))+1
     return {
@@ -83,8 +103,20 @@ def serve_month_frac(start:date,end:date,frac:int,shift:int):
         return JSONResponse({"error":str(e)},status_code=400)
     return span_as_response(f_start,f_end)
 
+@app.get("/{year}/{shift}")
+def handle_year_fraction(year:int,shift:int,fraction:int=None):
+    """
+    Get fraction {shift} in year {year} given divisor {fraction}
+    """
+    if fraction is None:
+        fraction = FRAC_SIZE
+    return span_as_response(*year_frac(year,fraction,shift))
+
 @app.get("/today/{frac}/{shift}/")
 def span_from_today(frac:int,shift:int):
+    """
+    Get the current fraction span 
+    """
     today = date.today()
     try:
         f_start,f_end = span_from_date(today,frac,shift)
